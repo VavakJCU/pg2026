@@ -13,7 +13,6 @@ def div(a, b):
     else: 
         #druha cast, kdy b je nenulove
         vysledek = a / b
-    vysledek = a / b
     return vysledek
 
 def je_delitelne_beze_zbytku(a, b):
