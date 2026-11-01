@@ -70,7 +70,7 @@ def print_file_type(file_name):
 if __name__ == '__main__':
     # přidej try-catch blok, odchyť obecnou vyjímku Exception a vypiš ji
     try:
-        file_name = sys.argv[1]
+        file_name = sys.argv[1] #získá název souboru (kitten) z příkazové řádky  #argument 0 = fifth.py  #argument 1 = kitten....
         print_file_type(file_name)
     except Exception as e:
         print(f"Chyba při zpracování souboru: {e}")
