@@ -74,4 +74,10 @@ if __name__ == '__main__':
         print_file_type(file_name)
     except Exception as e:
         print(f"Chyba při zpracování souboru: {e}")
-        
+
+"""
+    toto vložím do příkazového řádku a vše se spustí:
+    python fifth.py kitten.jpeg
+    python fifth.py kitten.png
+    python fifth.py kitten.gif
+"""
