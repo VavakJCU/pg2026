@@ -7,7 +7,7 @@ class Piece(ABC): #obecná figura
     def __init__(self, color, position):
         self.__color = color
         self.__position = position
-
+        #dvě podtržítka znamenají, že atribut je určen jako interní (tj pouze pro používaní uvnitř třídy)
         """
         Inicializuje šachovou figurku.
         
