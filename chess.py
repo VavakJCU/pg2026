@@ -1,24 +1,33 @@
 from abc import ABC, abstractmethod
-#import z knihovny abc funkci ABC (umožňuje vytvořit abstrktní třídu) a bstractmethod (umožňuje označit metodu jako abstrktní)
-#ABC = Abstract Base Clss
+#import z knihovny abc funkci ABC (umožňuje vytvořit abstraktní třídu) a abstractmethod (umožňuje označit metodu jako abstraktní)
+#ABC = Abstract Base Class
 
 
 class Piece(ABC): #obecná figura
     def __init__(self, color, position):
-        self.__color = color
-        self.__position = position
-        #dvě podtržítka znamenají, že atribut je určen jako interní (tj pouze pro používaní uvnitř třídy)
         """
         Inicializuje šachovou figurku.
-        
-        :parametr color: Barva figurky ('white' nebo 'black').
-        :parametr position: Aktuální pozice na šachovnici jako tuple (row, column).
-        """
 
-    @staticmethod #metoda (funkce), která je stejná pro všechny oběkty dané třídy
+        :param color: Barva figurky ('white' nebo 'black').
+        :param position: Aktuální pozice na šachovnici jako tuple (row, col).
+        """
+        #dvě podtržítka znamenají, že atribut je určen jako interní (tj pouze pro používaní uvnitř třídy)
+        self.__color = color
+        self.__position = position
+
+    @abstractmethod #zajistí/vynutí aby tato metoda byla implementována ve všech třídách vycházejících z této třídy
+    def possible_moves(self):
+        """
+        Vrací všechny možné pohyby figurky.
+        Musí být implementováno v podtřídách.
+
+        :return: Seznam možných pozic [(row, col), ...].
+        """
+        pass
+
+    @staticmethod #metoda, která je stejná pro všechny objekty dané třídy
     def is_position_on_board(position):
-        x, y = position
-        return 0 <= x < 8 and 0 <= y < 8
+        return 1 <= position[0] <= 8 and 1 <= position[1] <= 8
 
     @property #umožňuje používat metodu jako běžný atribut
     def color(self):
@@ -28,240 +37,171 @@ class Piece(ABC): #obecná figura
     def position(self):
         return self.__position
 
-    @position.setter #slouží k změně atributu oběktu
-    def position(self, new_position):
-        if self.is_position_on_board(new_position):
-            self.__position = new_position
-        else:
-            raise ValueError("Position is outside the chessboard")
+    @position.setter #slouží ke změně atributu objektu
+    def position(self, new_postion):
+        self.__position = new_postion
 
-    @abstractmethod #zajistí/vynutí aby tato metoda (funkce), byla implementována ve všech objektech vycházejících z této třídy
-    def possible_moves(self):
-        pass
-
-    def __str__(self): #metoda pythonu, která definuje co má vypsat příkaz print() pro náš oběkt
+    def __str__(self): #definuje, co má vypsat příkaz print() pro náš objekt
         return f'Piece({self.color}) at position {self.position}'
 
 
-class Pawn(Piece): #figurka pěšák #dědí atributy třídy Piece
+class Pawn(Piece): #pěšák
     def possible_moves(self):
-        x, y = self.position
-        moves = []
+        """
+        Vrací možné tahy pěšáka (pouze pohyb o jedno pole vpřed, bez braní).
+        Bílý pěšák jde nahoru (řádek se zvyšuje), černý dolů (řádek se snižuje).
+
+        :return: Seznam možných pozic [(row, col), ...].
+        """
+        row, col = self.position
 
         if self.color == "white":
-            new_position = (x, y + 1)
+            move = (row + 1, col)
         else:
-            new_position = (x, y - 1)
+            move = (row - 1, col)
 
-        if self.is_position_on_board(new_position):
-            moves.append(new_position)
-
-        return moves
+        final_moves = []
+        if self.is_position_on_board(move):
+            final_moves.append(move)
+        return final_moves
 
     def __str__(self):
         return f'Pawn({self.color}) at position {self.position}'
 
-class Knight(Piece):
+
+class Knight(Piece): #jezdec
     def possible_moves(self):
-        x, y = self.position
-        moves = []
+        """
+        Vrací všechny možné tahy jezdce.
 
-        possible_positions = [
-            (x + 1, y + 2),
-            (x + 1, y - 2),
-            (x - 1, y + 2),
-            (x - 1, y - 2),
-            (x + 2, y + 1),
-            (x + 2, y - 1),
-            (x - 2, y + 1),
-            (x - 2, y - 1)
+        :return: Seznam možných pozic [(row, col), ...].
+        """
+        row, col = self.position
+        moves = [
+            (row + 2, col + 1), (row + 2, col - 1),
+            (row - 2, col + 1), (row - 2, col - 1),
+            (row + 1, col + 2), (row + 1, col - 2),
+            (row - 1, col + 2), (row - 1, col - 2)
         ]
-
-        for position in possible_positions:
-            if self.is_position_on_board(position):
-                moves.append(position)
-
-        return moves
+        # Filtruje tahy, které jsou mimo šachovnici
+        final_moves = []
+        for move in moves:
+            if self.is_position_on_board(move):
+                final_moves.append(move)
+        return final_moves
 
     def __str__(self):
         return f'Knight({self.color}) at position {self.position}'
 
-class Bishop(Piece):
+
+class Bishop(Piece): #střelec
     def possible_moves(self):
-        x, y = self.position
-        moves = []
+        """
+        Vrací všechny možné tahy střelce (diagonálně všemi čtyřmi směry).
 
-        # Diagonálně nahoru doprava
-        new_x = x + 1
-        new_y = y + 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x += 1
-            new_y += 1
+        :return: Seznam možných pozic [(row, col), ...].
+        """
+        row, col = self.position
+        final_moves = []
 
-        # Diagonálně nahoru doleva
-        new_x = x - 1
-        new_y = y + 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x -= 1
-            new_y += 1
-
-        # Diagonálně dolů doprava
-        new_x = x + 1
-        new_y = y - 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x += 1
-            new_y -= 1
-
-        # Diagonálně dolů doleva
-        new_x = x - 1
-        new_y = y - 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x -= 1
-            new_y -= 1
-
-        return moves
+        # směry jako (změna řádku, změna sloupce)
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        for d_row, d_col in directions:
+            new_row = row + d_row
+            new_col = col + d_col
+            while self.is_position_on_board((new_row, new_col)):
+                final_moves.append((new_row, new_col))
+                new_row += d_row
+                new_col += d_col
+        return final_moves
 
     def __str__(self):
         return f'Bishop({self.color}) at position {self.position}'
 
-class Rook(Piece):
+
+class Rook(Piece): #věž
     def possible_moves(self):
-        x, y = self.position
-        moves = []
+        """
+        Vrací všechny možné tahy věže (vodorovně a svisle).
 
-        # Vodorovně doprava
-        new_x = x + 1
-        while self.is_position_on_board((new_x, y)):
-            moves.append((new_x, y))
-            new_x += 1
+        :return: Seznam možných pozic [(row, col), ...].
+        """
+        row, col = self.position
+        final_moves = []
 
-        # Vodorovně doleva
-        new_x = x - 1
-        while self.is_position_on_board((new_x, y)):
-            moves.append((new_x, y))
-            new_x -= 1
-
-        # Svisle nahoru
-        new_y = y + 1
-        while self.is_position_on_board((x, new_y)):
-            moves.append((x, new_y))
-            new_y += 1
-
-        # Svisle dolů
-        new_y = y - 1
-        while self.is_position_on_board((x, new_y)):
-            moves.append((x, new_y))
-            new_y -= 1
-
-        return moves
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        for d_row, d_col in directions:
+            new_row = row + d_row
+            new_col = col + d_col
+            while self.is_position_on_board((new_row, new_col)):
+                final_moves.append((new_row, new_col))
+                new_row += d_row
+                new_col += d_col
+        return final_moves
 
     def __str__(self):
         return f'Rook({self.color}) at position {self.position}'
 
-class Queen(Piece):
+
+class Queen(Piece): #dáma
     def possible_moves(self):
-        x, y = self.position
-        moves = []
+        """
+        Vrací všechny možné tahy dámy (jako věž + střelec).
 
-        # Vodorovně doprava
-        new_x = x + 1
-        while self.is_position_on_board((new_x, y)):
-            moves.append((new_x, y))
-            new_x += 1
+        :return: Seznam možných pozic [(row, col), ...].
+        """
+        row, col = self.position
+        final_moves = []
 
-        # Vodorovně doleva
-        new_x = x - 1
-        while self.is_position_on_board((new_x, y)):
-            moves.append((new_x, y))
-            new_x -= 1
-
-        # Svisle nahoru
-        new_y = y + 1
-        while self.is_position_on_board((x, new_y)):
-            moves.append((x, new_y))
-            new_y += 1
-
-        # Svisle dolů
-        new_y = y - 1
-        while self.is_position_on_board((x, new_y)):
-            moves.append((x, new_y))
-            new_y -= 1
-
-        # Diagonálně nahoru doprava
-        new_x = x + 1
-        new_y = y + 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x += 1
-            new_y += 1
-
-        # Diagonálně nahoru doleva
-        new_x = x - 1
-        new_y = y + 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x -= 1
-            new_y += 1
-
-        # Diagonálně dolů doprava
-        new_x = x + 1
-        new_y = y - 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x += 1
-            new_y -= 1
-
-        # Diagonálně dolů doleva
-        new_x = x - 1
-        new_y = y - 1
-        while self.is_position_on_board((new_x, new_y)):
-            moves.append((new_x, new_y))
-            new_x -= 1
-            new_y -= 1
-
-        return moves
+        directions = [
+            (1, 0), (-1, 0), (0, 1), (0, -1),    # jako věž
+            (1, 1), (1, -1), (-1, 1), (-1, -1)   # jako střelec
+        ]
+        for d_row, d_col in directions:
+            new_row = row + d_row
+            new_col = col + d_col
+            while self.is_position_on_board((new_row, new_col)):
+                final_moves.append((new_row, new_col))
+                new_row += d_row
+                new_col += d_col
+        return final_moves
 
     def __str__(self):
         return f'Queen({self.color}) at position {self.position}'
 
-class King(Piece):
+
+class King(Piece): #král
     def possible_moves(self):
-        x, y = self.position
-        moves = []
+        """
+        Vrací všechny možné tahy krále (o jedno pole libovolným směrem).
 
-        possible_positions = [
-            (x - 1, y - 1),
-            (x - 1, y),
-            (x - 1, y + 1),
-            (x, y - 1),
-            (x, y + 1),
-            (x + 1, y - 1),
-            (x + 1, y),
-            (x + 1, y + 1)
+        :return: Seznam možných pozic [(row, col), ...].
+        """
+        row, col = self.position
+        moves = [
+            (row + 1, col - 1), (row + 1, col), (row + 1, col + 1),
+            (row, col - 1),                     (row, col + 1),
+            (row - 1, col - 1), (row - 1, col), (row - 1, col + 1)
         ]
-
-        for position in possible_positions:
-            if self.is_position_on_board(position):
-                moves.append(position)
-
-        return moves
+        # Filtruje tahy, které jsou mimo šachovnici
+        final_moves = []
+        for move in moves:
+            if self.is_position_on_board(move):
+                final_moves.append(move)
+        return final_moves
 
     def __str__(self):
         return f'King({self.color}) at position {self.position}'
 
-# Jednoduchá ukázka použití:
-if __name__ == "__main__":
-    #figurka = Pawn("white", (4, 1))
-    figurka = Knight("white", (1, 0))
-    #figurka = Bishop("white", (2, 0))
-    #figurka = Rook("white", (0, 0))
-    #figurka = Queen("white", (3, 0))
-    #figurka = King("white", (4, 0))
 
+if __name__ == "__main__":
+    figurka =  Rook("white", (1, 1))
+        #Pawn("white", (2, 1))
+        #Pawn("black", (7, 1))
+        #Knight("black", (1, 2))
+        #Bishop("white", (1, 3))
+        #Queen("white", (1, 4))
+        #King("white", (1, 5))
 
     print(figurka)
-    print("Possible moves:", figurka.possible_moves())
+    print("Možné kroky:", figurka.possible_moves())
